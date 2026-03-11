@@ -1,0 +1,3 @@
+# Wildlens AI - Autonomous Smart Survillance system
+
+WildLensAI is an autonomous, eco-friendly wildlife surveillance framework designed specifically for remote, off-grid environments where power and network connectivity are unavailable. The project addresses the limitations of traditional monitoring—such as high power consumption and "data overload"—by utilizing a tiered, event-driven architecture.
