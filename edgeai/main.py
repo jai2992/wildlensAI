@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import json
 import os
 from datetime import datetime
@@ -17,6 +15,13 @@ detector = load_detector(MODEL_PATH)
 
 # Category mapping
 CATEGORY_MAP = {"1": "animal", "2": "person", "3": "vehicle"}
+
+# Confidence thresholds
+MIN_CONFIDENCE = {
+    "animal": 0.5,
+    "person": 0.3,
+    "vehicle": 0.7,
+}
 
 # Bounding box colors per category
 BBOX_COLORS = {"animal": "red", "person": "blue", "vehicle": "green"}
@@ -56,6 +61,10 @@ def detect_from_image(filepath: str) -> dict:
             try:
                 category_name = CATEGORY_MAP.get(str(det["category"]), "unknown")
                 confidence = float(det["conf"])
+
+                if confidence < MIN_CONFIDENCE.get(category_name, 0.5):
+                    continue
+
                 bbox_norm = det["bbox"]
 
                 x_min = bbox_norm[0] * img_width
