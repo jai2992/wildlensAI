@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green-900:#173404;--green-800:#27500A;--green-700:#3B6D11;--green-600:#639922;--green-400:#97C459;--green-100:#C0DD97;--green-50:#EAF3DE;
+  --teal-900:#04342C;--teal-800:#085041;--teal-600:#0F6E56;--teal-400:#1D9E75;--teal-100:#9FE1CB;--teal-50:#E1F5EE;
+  --amber-900:#412402;--amber-800:#633806;--amber-600:#854F0B;--amber-400:#BA7517;--amber-200:#EF9F27;--amber-100:#FAC775;--amber-50:#FAEEDA;
+  --coral-600:#993C1D;--coral-400:#D85A30;--coral-100:#F5C4B3;--coral-50:#FAECE7;
+  --gray-900:#2C2C2A;--gray-800:#444441;--gray-600:#5F5E5A;--gray-400:#888780;--gray-200:#B4B2A9;--gray-100:#D3D1C7;--gray-50:#F1EFE8;
+  --blue-800:#0C447C;--blue-600:#185FA5;--blue-400:#378ADD;--blue-50:#E6F1FB;
+}
+html{font-family:'Anthropic Sans',system-ui,sans-serif;background:transparent;color:var(--color-text-primary,#1a1a18);scroll-behavior:smooth}
+
+/* ─── HERO ─── */
+#hero{position:relative;min-height:560px;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:16px;background:#0a1a0f}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero-content{position:relative;z-index:2;text-align:center;padding:3rem 2rem;max-width:680px}
+.hero-title{font-size:clamp(22px,4vw,36px);font-weight:500;color:#e8f5e0;line-height:1.25;margin-bottom:1rem}
+.hero-title em{font-style:normal;color:#9FE1CB}
+.hero-sub{font-size:14px;color:#9fa;opacity:.85;line-height:1.7;max-width:520px;margin:0 auto 1.5rem}
+.hero-sub sup{font-size:10px;vertical-align:super}
+.badge{display:inline-block;font-size:11px;padding:4px 12px;border-radius:6px;background:rgba(29,158,117,.18);color:#9FE1CB;border:0.5px solid rgba(29,158,117,.35);letter-spacing:.04em}
+
+/* ─── SECTION WRAPPER ─── */
+.section{padding:2.5rem 1.5rem;max-width:760px;margin:0 auto}
+.section-tag{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--green-600);font-weight:500;margin-bottom:.5rem}
+.section-title{font-size:22px;font-weight:500;line-height:1.3;margin-bottom:.75rem;color:var(--color-text-primary,#1a1a18)}
+.section-body{font-size:14px;line-height:1.75;color:var(--color-text-secondary,#555)}
+hr.divider{border:none;border-top:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.12));margin:0 1.5rem}
+
+/* ─── BEFORE/AFTER ─── */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}
+@media(max-width:520px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{border-radius:12px;padding:1.25rem;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.12))}
+.compare-card.before{background:var(--coral-50,#FAECE7)}
+.compare-card.after{background:var(--teal-50,#E1F5EE)}
+.compare-card h3{font-size:13px;font-weight:500;margin-bottom:.75rem}
+.compare-card.before h3{color:var(--coral-600)}
+.compare-card.after h3{color:var(--teal-600)}
+.compare-item{font-size:13px;line-height:1.6;margin-bottom:.5rem;padding-left:1.2rem;position:relative;color:var(--color-text-secondary,#555)}
+.compare-item::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%}
+.compare-card.before .compare-item::before{background:var(--coral-400)}
+.compare-card.after .compare-item::before{background:var(--teal-400)}
+
+/* ─── NODE ANATOMY ─── */
+.node-wrap{background:var(--color-background-secondary,#f7f6f2);border-radius:16px;padding:1.5rem;margin-top:1.5rem;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1))}
+.node-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-top:1rem}
+.node-step{border-radius:10px;padding:1rem;background:var(--color-background-primary,#fff);border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));cursor:pointer;transition:border-color .2s}
+.node-step:hover{border-color:var(--teal-400)}
+.step-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:.5rem}
+.node-step h4{font-size:12px;font-weight:500;margin-bottom:.25rem;color:var(--color-text-primary,#1a1a18)}
+.node-step p{font-size:11px;line-height:1.55;color:var(--color-text-secondary,#555)}
+.node-step.active{border-color:var(--teal-400);background:var(--teal-50,#E1F5EE)}
+
+/* wake sequence viz */
+.wake-bar{display:flex;align-items:center;gap:.5rem;margin-top:1rem;background:var(--color-background-primary,#fff);border-radius:10px;padding:.75rem 1rem;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));font-size:12px}
+.wake-chip{border-radius:6px;padding:3px 10px;font-size:11px;font-weight:500;transition:all .3s}
+.wake-chip.sleep{background:var(--gray-100);color:var(--gray-600)}
+.wake-chip.pir{background:var(--amber-50);color:var(--amber-600)}
+.wake-chip.rpi{background:var(--teal-50);color:var(--teal-600)}
+.wake-chip.alert{background:var(--green-50);color:var(--green-700)}
+.wake-arrow{font-size:14px;color:var(--gray-400)}
+.wake-chip.lit{box-shadow:0 0 0 2px currentColor;transform:scale(1.08)}
+
+/* ─── MESH MAP ─── */
+#mesh-section{padding:2.5rem 1.5rem;max-width:760px;margin:0 auto}
+#mesh-canvas-wrap{border-radius:16px;overflow:hidden;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));background:#0e1c0e;margin-top:1.5rem;position:relative}
+#mesh-canvas{display:block;width:100%;height:320px}
+.mesh-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}
+.mesh-stat{background:var(--color-background-secondary,#f7f6f2);border-radius:10px;padding:.85rem 1rem;text-align:center;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1))}
+.mesh-stat .val{font-size:20px;font-weight:500;color:var(--green-700,#3B6D11)}
+.mesh-stat .lbl{font-size:11px;color:var(--color-text-secondary,#666);margin-top:2px}
+
+/* ─── MEGA DETECTOR TOGGLE ─── */
+.megadetector-wrap{border-radius:16px;overflow:hidden;background:var(--gray-900,#2C2C2A);position:relative;margin-top:1.5rem;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1))}
+.megadetector-img{width:100%;display:block;height:260px;object-fit:cover}
+.megadetector-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transition:opacity .3s}
+.megadetector-ctrl{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:var(--color-background-secondary,#f7f6f2);border-top:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1))}
+.megadetector-ctrl span{font-size:13px;color:var(--color-text-secondary,#555)}
+.toggle-pill{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.t-track{width:36px;height:20px;background:var(--gray-200);border-radius:10px;position:relative;transition:background .2s}
+.t-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none}
+.t-track.on{background:var(--teal-400)}
+.t-track.on .t-thumb{transform:translateX(16px)}
+.toggle-pill .lbl{font-size:13px;font-weight:500;color:var(--color-text-primary,#1a1a18)}
+
+/* ─── DASHBOARD ALERT ─── */
+.dash-wrap{background:var(--gray-900,#2C2C2A);border-radius:16px;padding:1.25rem 1.5rem;margin-top:1.5rem;font-family:var(--font-mono,'Courier New',monospace)}
+.dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.dash-brand{font-size:13px;color:var(--teal-100);font-weight:500}
+.dash-time{font-size:11px;color:var(--gray-400)}
+.alert-row{display:flex;align-items:center;gap:.75rem;padding:.75rem;border-radius:8px;border:0.5px solid rgba(29,158,117,.3);background:rgba(29,158,117,.08);margin-bottom:.5rem;transition:all .4s}
+.alert-row.intrusion{border-color:rgba(216,90,48,.4);background:rgba(216,90,48,.1)}
+.alert-dot{width:8px;height:8px;border-radius:50%;background:var(--teal-400);flex-shrink:0}
+.alert-dot.red{background:var(--coral-400);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.alert-text{font-size:12px;color:#ddd;flex:1}
+.alert-text strong{color:#fff}
+.alert-zone{font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(29,158,117,.2);color:var(--teal-100)}
+.alert-zone.red{background:rgba(216,90,48,.25);color:var(--coral-100)}
+.dash-footer{margin-top:1rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.dash-metric{background:rgba(255,255,255,.04);border-radius:6px;padding:.5rem .75rem;text-align:center}
+.dash-metric .mv{font-size:15px;font-weight:500;color:#fff}
+.dash-metric .ml{font-size:10px;color:var(--gray-400);margin-top:2px}
+
+/* ─── SPECS TABLE ─── */
+.specs-table{width:100%;border-collapse:collapse;margin-top:1.25rem;font-size:13px}
+.specs-table th{text-align:left;font-weight:500;padding:.6rem .75rem;background:var(--color-background-secondary,#f7f6f2);color:var(--color-text-secondary,#555);border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1))}
+.specs-table td{padding:.6rem .75rem;border-bottom:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));color:var(--color-text-primary,#1a1a18)}
+.specs-table tr:last-child td{border-bottom:none}
+.spec-badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500;background:var(--teal-50);color:var(--teal-700,#085041)}
+
+/* ─── VIDEO SECTION ─── */
+.video-section{padding:2.5rem 1.5rem;max-width:760px;margin:0 auto}
+.video-wrap{position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:16px;border:0.5px solid var(--color-border-tertiary,rgba(0,0,0,.1));margin-top:1.5rem}
+.video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+
+/* ─── CTA ─── */
+.cta-section{background:linear-gradient(135deg,#0e2e14 0%,#0a1a0f 100%);border-radius:16px;padding:2.5rem 2rem;text-align:center;margin:2rem 1.5rem 2.5rem}
+.cta-title{font-size:22px;font-weight:500;color:#e8f5e0;margin-bottom:.75rem}
+.cta-sub{font-size:14px;color:#9fa;margin-bottom:1.5rem;line-height:1.65;max-width:480px;margin-left:auto;margin-right:auto;margin-bottom:1.5rem}
+.cta-btn{display:inline-block;padding:.7rem 2rem;border-radius:8px;background:var(--teal-400);color:#fff;font-weight:500;font-size:14px;border:none;cursor:pointer;transition:background .2s}
+.cta-btn:hover{background:var(--teal-600);transform:translateY(-2px);box-shadow:0 8px 24px rgba(29,158,117,.3)}
+.cta-btn{transition:all .3s cubic-bezier(.25,.46,.45,.94)}
+
+/* ─── SCROLL ANIMATIONS ─── */
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity .6s ease-out,transform .6s ease-out}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* ─── ENHANCED INTERACTIVE STATES ─── */
+.section{transition:all .3s ease-out}
+.section:hover{transform:translateY(-2px)}
+
+.node-step{transition:all .3s cubic-bezier(.25,.46,.45,.94)}
+.node-step:hover{transform:translateY(-4px);box-shadow:0 4px 16px rgba(29,158,117,.15)}
+.node-step.active{box-shadow:0 8px 32px rgba(29,158,117,.25)}
+
+/* ─── FLOATING ANIMATION ─── */
+@keyframes float{0%,100%{transform:translateY(0px)}50%{transform:translateY(-8px)}}
+.float-item{animation:float 3s ease-in-out infinite}
+.badge{animation:float 4s ease-in-out infinite}
+
+/* ─── PULSE ANIMATION ─── */
+@keyframes pulse-soft{0%,100%{opacity:1}50%{opacity:.7}}
+.alert-dot{animation:pulse-soft 1.5s ease-in-out infinite}
+
+/* ─── DARK MODE ─── */
+@media(prefers-color-scheme:dark){
+  .compare-card.before{background:rgba(153,60,29,.15)}
+  .compare-card.after{background:rgba(15,110,86,.12)}
+  .node-step.active{background:rgba(15,110,86,.18)}
+  .wake-bar,.node-step{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
+  .mesh-stat,.compare-card{border-color:rgba(255,255,255,.08)}
+  .mesh-stat{background:rgba(255,255,255,.04)}
+  .specs-table th{background:rgba(255,255,255,.06)}
+  .megadetector-ctrl{background:rgba(255,255,255,.05)}
+  .node-wrap{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08)}
+  .mesh-stat .val{color:var(--teal-100)}
+  .video-wrap{border-color:rgba(255,255,255,.08)}
+}
+</style>
+
+<!-- ══════════════════════════════════════════ HERO -->
+<div id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="badge" style="margin-bottom:1rem">WildLensAI · Edge Intelligence for Conservation</div>
+    <h1 class="hero-title">The Forest Never Sleeps.<br><em>Neither Do the Threats.</em></h1>
+    <p class="hero-sub">In 2,000 km<sup>2</sup> of wilderness, 100 rangers can't find every snare. Traditional cameras are drowning in false positives, and power is a luxury the wild doesn't provide.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ BURDEN -->
+<div class="section">
+  <div class="section-tag">Phase 1 · The challenge</div>
+  <h2 class="section-title">Swapping SD cards. Sifting noise. Running out of power.</h2>
+  <p class="section-body">Rangers trek miles to manually retrieve footage that is already days old by the time it's reviewed. Conventional CCTV systems are power-hungry, demanding massive solar arrays just to stay awake. Meanwhile, the threats keep moving.</p>
+  <div class="compare-grid">
+    <div class="compare-card before">
+      <h3>Traditional systems</h3>
+      <div class="compare-item">Days-old intelligence — SD cards swapped on foot</div>
+      <div class="compare-item">Thousands of hours lost to false positives</div>
+      <div class="compare-item">Power-hungry CCTV drains solar reserves</div>
+      <div class="compare-item">No connectivity in remote terrain</div>
+    </div>
+    <div class="compare-card after">
+      <h3>WildLensAI</h3>
+      <div class="compare-item">Sub-second alert propagation across kilometers</div>
+      <div class="compare-item">On-device Mega Detector — only real threats wake the network</div>
+      <div class="compare-item">Microampere deep sleep between events</div>
+      <div class="compare-item">Infrastructure-free mesh — no Wi-Fi, no cellular needed</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ NODE ANATOMY -->
+<div class="section">
+  <div class="section-tag">Phase 2 · The awakening</div>
+  <h2 class="section-title">Event-driven intelligence that wakes up in under 400 ms</h2>
+  <p class="section-body">The node spends almost its entire life in deep sleep, drawing only microamperes. A single PIR trigger kicks off a precise four-stage sequence — from photons to classification in under half a second.</p>
+  <div class="node-wrap">
+    <div class="node-steps" id="node-steps">
+      <div class="node-step active" data-idx="0" onclick="selectStep(0)">
+        <div class="step-icon" style="background:var(--gray-100)">💤</div>
+        <h4>Deep sleep</h4>
+        <p>ESP32-WROVER at μA draw. Solar capacitor accumulates charge. Zero processing.</p>
+      </div>
+      <div class="node-step" data-idx="1" onclick="selectStep(1)">
+        <div class="step-icon" style="background:var(--amber-50)">⚡</div>
+        <h4>PIR trigger</h4>
+        <p>Passive infrared sensor detects body-heat motion — wakes the ESP32 in &lt;10 ms.</p>
+      </div>
+      <div class="node-step" data-idx="2" onclick="selectStep(2)">
+        <div class="step-icon" style="background:var(--teal-50)">🧠</div>
+        <h4>Wake → analyse</h4>
+        <p>ESP32 signals Raspberry Pi 4. Mega Detector runs on-device — human or animal in <400 ms.</p>
+      </div>
+      <div class="node-step" data-idx="3" onclick="selectStep(3)">
+        <div class="step-icon" style="background:var(--green-50)">📡</div>
+        <h4>Mesh alert</h4>
+        <p>44-byte protobuf packet emitted via ESP-NOW. Node returns to deep sleep.</p>
+      </div>
+    </div>
+    <div class="wake-bar">
+      <span class="wake-chip sleep" id="w0">ESP32 · sleep</span>
+      <span class="wake-arrow">→</span>
+      <span class="wake-chip pir" id="w1">PIR · motion</span>
+      <span class="wake-arrow">→</span>
+      <span class="wake-chip rpi" id="w2">RPi 4 · Mega Detector</span>
+      <span class="wake-arrow">→</span>
+      <span class="wake-chip alert" id="w3">Alert · ESP-NOW</span>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ MEGA DETECTOR TOGGLE -->
+<div class="section">
+  <div class="section-tag">Phase 3 · See through the lens</div>
+  <h2 class="section-title">What the node sees — and what it decides</h2>
+  <p class="section-body">Toggle the AI overlay to see how the onboard Mega Detector model draws bounding boxes and classifies each detection in under 400 ms.</p>
+  <div class="megadetector-wrap">
+    <canvas id="megadetector-canvas" class="megadetector-img" style="height:260px;display:block"></canvas>
+    <canvas id="megadetector-overlay" class="megadetector-canvas" style="opacity:0"></canvas>
+    <div class="megadetector-ctrl">
+      <span>Raw camera feed simulation</span>
+      <label class="toggle-pill" onclick="toggleMegaDetector()">
+        <div class="t-track" id="megadetector-track"><div class="t-thumb"></div></div>
+        <span class="lbl">See through the lens</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ MESH MAP -->
+<div id="mesh-section">
+  <div class="section-tag">Phase 4 · The digital bucket brigade</div>
+  <h2 class="section-title">No Wi-Fi. No cellular. Intelligence travels anyway.</h2>
+  <p class="section-body">Using the ESP-NOW protocol, each node relays compact 44-byte alerts — payload reduced by 76% with Protocol Buffers — hopping node-to-node across kilometers of harsh terrain to the ranger station in under one second.</p>
+  <div id="mesh-canvas-wrap">
+    <canvas id="mesh-canvas"></canvas>
+  </div>
+  <div class="mesh-stat-row">
+    <div class="mesh-stat"><div class="val">44 B</div><div class="lbl">Alert payload (protobuf)</div></div>
+    <div class="mesh-stat"><div class="val">76%</div><div class="lbl">Payload reduction</div></div>
+    <div class="mesh-stat"><div class="val">&lt;1 s</div><div class="lbl">Terrain-to-station latency</div></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ DASHBOARD -->
+<div class="section">
+  <div class="section-tag">Phase 5 · Actionable intelligence</div>
+  <h2 class="section-title">Rangers deploy where they're needed. Exactly when.</h2>
+  <p class="section-body">The base station dashboard surfaces classified, geo-tagged alerts in real time. No more guesswork — just precise, actionable intelligence.</p>
+  <div class="dash-wrap">
+    <div class="dash-header">
+      <span class="dash-brand">WildLensAI · Ranger Station Δ</span>
+      <span class="dash-time" id="dash-time">04:31:07 · LIVE</span>
+    </div>
+    <div id="alert-list"></div>
+    <div class="dash-footer">
+      <div class="dash-metric"><div class="mv" id="d-nodes">12</div><div class="ml">Active nodes</div></div>
+      <div class="dash-metric"><div class="mv" id="d-evt">0</div><div class="ml">Events today</div></div>
+      <div class="dash-metric"><div class="mv" style="color:var(--teal-100)">Solar</div><div class="ml">Power source</div></div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ SPECS -->
+<div class="section">
+  <div class="section-tag">Hardware</div>
+  <h2 class="section-title">Built for the harshest terrain on earth</h2>
+  <p class="section-body">Every component selected for extreme reliability, ultra-low power draw, and edge intelligence.</p>
+  <table class="specs-table">
+    <thead><tr><th>Component</th><th>Model</th><th>Role</th><th style="text-align:right">Status</th></tr></thead>
+    <tbody>
+      <tr><td>Solar panel</td><td>10 W monocrystalline</td><td>Primary power harvest</td><td style="text-align:right"><span class="spec-badge">Field-ready</span></td></tr>
+      <tr><td>Edge compute</td><td>Raspberry Pi 4 (4 GB)</td><td>Mega Detector inference host</td><td style="text-align:right"><span class="spec-badge">Field-ready</span></td></tr>
+      <tr><td>Comm + sleep</td><td>ESP32-WROVER</td><td>PIR wake, ESP-NOW relay</td><td style="text-align:right"><span class="spec-badge">Field-ready</span></td></tr>
+      <tr><td>AI model</td><td>Mega Detector (quantised)</td><td>Human / animal detection</td><td style="text-align:right"><span class="spec-badge">Field-ready</span></td></tr>
+      <tr><td>Protocol</td><td>ESP-NOW + Protobuf</td><td>Mesh alert propagation</td><td style="text-align:right"><span class="spec-badge">Field-ready</span></td></tr>
+      <tr><td>Motion sensor</td><td>PIR HC-SR501</td><td>Microampere wake trigger</td><td style="text-align:right"><span class="spec-badge">Field-ready</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ VIDEO -->
+<div class="video-section">
+  <div class="section-tag">How it works</div>
+  <h2 class="section-title">Watch WildLensAI in action</h2>
+  <p class="section-body">See how edge intelligence and mesh networking transform conservation efforts in real-world deployments across protected wildlife reserves.</p>
+  <div class="video-wrap">
+    <iframe src="https://youtu.be/nFKqiyVzI2w" allowfullscreen="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" loading="lazy"></iframe>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══════════════════════════════════════════ CTA -->
+<div class="cta-section">
+  <div class="cta-title">Join the Digital Frontier of Conservation</div>
+  <p class="cta-sub">WildLensAI deploys where infrastructure ends. Solar-powered, eco-conscious, and built to outlast the harshest seasons.</p>
+  <button class="cta-btn" onclick="sendPrompt('Tell me how to deploy WildLensAI in my reserve')">Get deployment details →</button>
+</div>
+
+<script>
+/* ─── SCROLL REVEAL ANIMATIONS ─── */
+(function(){
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  },{threshold:.15});
+  
+  document.querySelectorAll('.section, .cta-section').forEach(el=>{
+    el.classList.add('fade-in');
+    observer.observe(el);
+  });
+})();
+
+/* ─── PARALLAX HERO ─── */
+document.addEventListener('mousemove',(e)=>{
+  const hero=document.getElementById('hero');
+  if(!hero)return;
+  const rect=hero.getBoundingClientRect();
+  if(rect.top>window.innerHeight)return;
+  const x=(e.clientX/window.innerWidth-0.5)*20;
+  const y=(e.clientY/window.innerHeight-0.5)*20;
+  document.querySelectorAll('.hero-content').forEach(el=>{
+    el.style.transform=`perspective(1000px) rotateX(${y*.3}deg) rotateY(${-x*.3}deg)`;
+  });
+},{passive:true});
+
+/* ─── HERO PARTICLES (forest mist) ─── */
+(function(){
+  const c=document.getElementById('hero-canvas');
+  const ctx=c.getContext('2d');
+  let W,H,particles=[];
+  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;initP()}
+  function initP(){particles=[];for(let i=0;i<120;i++)particles.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,vx:(Math.random()-.5)*.1,vy:-(Math.random()*.15+.03),a:Math.random()*.6+.05,pulse:Math.random()})}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#0a1a0f';ctx.fillRect(0,0,W,H);
+    // faint tree silhouettes with gradient
+    const grad=ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'rgba(15,40,20,0.3)');
+    grad.addColorStop(1,'rgba(10,26,15,0.8)');
+    ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+    
+    ctx.fillStyle='rgba(15,40,20,0.6)';
+    [[0,.7,60,.25],[100,.6,80,.3],[200,.75,50,.2],[300,.65,70,.28],[420,.7,65,.25],[530,.6,90,.3],[640,.72,55,.22]].forEach(([x,ys,w,a])=>{
+      ctx.globalAlpha=a;ctx.fillRect(x,H*ys,w,H*(1-ys));
+    });
+    ctx.globalAlpha=1;
+    // mist particles with pulsing
+    particles.forEach(p=>{
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      const pulse=Math.sin(Date.now()/1000+p.pulse)*0.3+0.7;
+      ctx.fillStyle=`rgba(180,230,200,${p.a*pulse})`;ctx.fill();
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.y<-4)p.y=H+2;if(p.x<-4)p.x=W+2;if(p.x>W+4)p.x=-2;
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);
+  resize();draw();
+})();
+
+/* ─── WAKE SEQUENCE HIGHLIGHT ─── */
+function selectStep(idx){
+  document.querySelectorAll('.node-step').forEach((s,i)=>{
+    s.classList.toggle('active',i===idx);
+    if(i===idx)s.style.transform='scale(1.02)';
+    else s.style.transform='scale(1)';
+  });
+  document.querySelectorAll('.wake-chip').forEach((c,i)=>c.classList.toggle('lit',i===idx));
+}
+let autoStep=0;
+setInterval(()=>{autoStep=(autoStep+1)%4;selectStep(autoStep)},1800);
+
+/* ─── ENHANCED MEGA DETECTOR CANVAS ─── */
+(function(){
+  const c=document.getElementById('megadetector-canvas');
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.offsetWidth*window.devicePixelRatio||c.offsetWidth;c.height=260*window.devicePixelRatio||260;ctx.scale(window.devicePixelRatio||1,window.devicePixelRatio||1);drawScene()}
+  function drawScene(){
+    const w=c.offsetWidth||680,h=260;
+    // gradient background
+    const grad=ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,'#1a2e1a');
+    grad.addColorStop(1,'#0f1f0f');
+    ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+    
+    // ground with detail
+    ctx.fillStyle='#253d1d';ctx.fillRect(0,170,w,90);
+    ctx.fillStyle='rgba(37,61,29,.5)';
+    for(let i=0;i<w;i+=20)ctx.fillRect(i,175,10,2);
+    
+    // trees with shadows
+    [[60,60,30,120],[150,40,25,130],[280,50,22,140],[480,45,28,130],[590,55,32,120],[380,65,26,115]].forEach(([x,y,r,th])=>{
+      ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(x-r/2.5+2,y+r+2,r/1.2,th-y-r);
+      ctx.fillStyle='#1a3012';ctx.fillRect(x-r/2.5,y+r,r/1.2,th-y-r);ctx.fillStyle='#213d15';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+    });
+    // figure (human silhouette) with glow
+    ctx.shadowColor='rgba(58,90,48,.4)';ctx.shadowBlur=8;
+    ctx.fillStyle='#3a5a30';
+    ctx.fillRect(300,120,16,50);ctx.beginPath();ctx.arc(308,115,10,0,Math.PI*2);ctx.fill();
+    ctx.fillRect(292,140,8,30);ctx.fillRect(312,140,8,30);
+    // animal (deer silhouette)
+    ctx.fillStyle='#4a5a25';
+    ctx.fillRect(180,145,40,25);ctx.beginPath();ctx.arc(220,140,12,0,Math.PI*2);ctx.fill();
+    [186,192,212,218].forEach(x=>{ctx.fillRect(x,168,4,18)});
+    ctx.fillRect(220,132,4,18);ctx.fillRect(216,130,14,4);
+    ctx.shadowColor='transparent';
+  }
+  window.addEventListener('resize',()=>{resize()});
+  resize();
+
+  const ov=document.getElementById('megadetector-overlay');
+  const ox=ov.getContext('2d');
+  function drawOverlay(){
+    ov.width=ov.offsetWidth||680;ov.height=260;
+    const w=ov.offsetWidth||680;
+    // human box with glow
+    ox.shadowColor='#E85D24';ox.shadowBlur=8;
+    ox.strokeStyle='#E85D24';ox.lineWidth=2;ox.strokeRect(286,108,46,72);
+    ox.shadowColor='transparent';
+    ox.fillStyle='#E85D24';ox.fillRect(286,105,90,14);
+    ox.fillStyle='#fff';ox.font='bold 11px sans-serif';ox.fillText('HUMAN  0.94',290,115);
+    // animal box with glow
+    ox.shadowColor='#1D9E75';ox.shadowBlur=8;
+    ox.strokeStyle='#1D9E75';ox.lineWidth=2;ox.strokeRect(168,130,68,58);
+    ox.shadowColor='transparent';
+    ox.fillStyle='#1D9E75';ox.fillRect(168,127,80,14);
+    ox.fillStyle='#fff';ox.fillText('ANIMAL  0.97',171,137);
+    // stats bar with improved styling
+    ox.fillStyle='rgba(0,0,0,.7)';ox.fillRect(0,0,w,22);
+    ox.fillStyle='#9FE1CB';ox.font='11px monospace';ox.fillText('Mega Detector · 382ms · 2 detections · ALERT → Zone 7',10,14);
+  }
+  drawOverlay();
+  window.addEventListener('resize',drawOverlay);
+})();
+
+let megadetectorOn=false;
+function toggleMegaDetector(){
+  megadetectorOn=!megadetectorOn;
+  const overlay=document.getElementById('megadetector-overlay');
+  overlay.style.transition='opacity .3s cubic-bezier(.25,.46,.45,.94)';
+  overlay.style.opacity=megadetectorOn?'1':'0';
+  document.getElementById('megadetector-track').classList.toggle('on',megadetectorOn);
+}
+
+/* ─── ENHANCED MESH MAP ─── */
+(function(){
+  const c=document.getElementById('mesh-canvas');
+  const ctx=c.getContext('2d');
+  let W,H;
+  const nodes=[
+    {x:.12,y:.25,label:'Node A',type:'node',pulse:0},{x:.3,y:.55,label:'Node B',type:'node',pulse:0.3},
+    {x:.5,y:.2,label:'Node C',type:'node',pulse:0.6},{x:.68,y:.6,label:'Node D',type:'node',pulse:0.9},
+    {x:.85,y:.35,label:'Station',type:'station',pulse:0}
+  ];
+  const edges=[[0,1],[1,2],[2,3],[3,4],[1,3],[0,2]];
+  let pulses=[];
+  let activeEdge=0;
+  let t=0;
+
+  function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight}
+  function gx(n){return nodes[n].x*W}function gy(n){return nodes[n].y*H}
+
+  setInterval(()=>{
+    const e=edges[activeEdge%edges.length];
+    pulses.push({from:e[0],to:e[1],p:0,speed:.018+Math.random()*.01});
+    activeEdge++;
+    if(activeEdge===0||activeEdge%3===0)pulses.push({from:0,to:1,p:0,speed:.02});
+  },600);
+
+  function draw(){
+    t++;ctx.clearRect(0,0,W,H);
+    // animated background
+    const gradBg=ctx.createLinearGradient(0,0,W,H);
+    gradBg.addColorStop(0,'rgba(14,28,14,.8)');
+    gradBg.addColorStop(1,'rgba(10,26,15,.6)');
+    ctx.fillStyle=gradBg;ctx.fillRect(0,0,W,H);
+    
+    // topo background dots with animation
+    ctx.fillStyle='rgba(80,140,60,.12)';
+    for(let i=0;i<200;i++){
+      const bx=(i*73%W),by=(i*57%H);
+      const dot=Math.sin(t*0.01+i)*2+3;
+      ctx.beginPath();ctx.arc(bx,by,dot*.5,0,Math.PI*2);ctx.fill();
+    }
+    // edges with gradient
+    edges.forEach(([a,b])=>{
+      const grad=ctx.createLinearGradient(gx(a),gy(a),gx(b),gy(b));
+      grad.addColorStop(0,'rgba(97,196,89,.1)');
+      grad.addColorStop(1,'rgba(97,196,89,.25)');
+      ctx.beginPath();ctx.moveTo(gx(a),gy(a));ctx.lineTo(gx(b),gy(b));
+      ctx.strokeStyle=grad;ctx.lineWidth=1.5;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
+    });
+    // pulse dots
+    pulses.forEach((p,i)=>{
+      p.p+=p.speed;
+      if(p.p>1){pulses.splice(i,1);return}
+      const x=gx(p.from)+(gx(p.to)-gx(p.from))*p.p;
+      const y=gy(p.from)+(gy(p.to)-gy(p.from))*p.p;
+      ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
+      ctx.fillStyle='rgba(29,158,117,.95)';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,8+p.p*4,0,Math.PI*2);
+      ctx.fillStyle='rgba(29,158,117,.15)';ctx.fill();
+    });
+    // nodes with breathing effect
+    nodes.forEach((n,i)=>{
+      const x=gx(i),y=gy(i);
+      const isStation=n.type==='station';
+      const breathing=Math.sin(t*0.03+n.pulse)*1.5+8;
+      const r=isStation?14:breathing;
+      ctx.beginPath();ctx.arc(x,y,r+4,0,Math.PI*2);
+      ctx.fillStyle=isStation?'rgba(250,199,117,.15)':'rgba(97,196,89,.12)';ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fillStyle=isStation?'#BA7517':'#1D9E75';ctx.fill();
+      ctx.fillStyle='#fff';ctx.font=`bold ${isStation?9:8}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(isStation?'⌂':'●',x,y);
+      ctx.fillStyle='rgba(200,240,200,.8)';ctx.font='10px sans-serif';ctx.fillText(n.label,x,y+r+12);
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{resize()});
+  resize();draw();
+})();
+
+/* ─── ENHANCED DASHBOARD ─── */
+const alertTemplates=[
+  {type:'ok',text:'<strong>Elephant herd detected</strong> — moving east along waterline',zone:'Zone 3'},
+  {type:'ok',text:'<strong>Leopard patrol</strong> — single adult, nocturnal movement nominal',zone:'Zone 5'},
+  {type:'intrusion',text:'<strong>Human intrusion detected</strong> — 2 individuals, bearing 047°',zone:'Zone 7'},
+  {type:'ok',text:'<strong>Buffalo group</strong> — 14 animals, grazing pattern normal',zone:'Zone 2'},
+];
+let evtCount=0;
+function renderAlerts(){
+  const list=document.getElementById('alert-list');
+  list.innerHTML='';
+  alertTemplates.slice(0,3).forEach((a,idx)=>{
+    const row=document.createElement('div');
+    row.className='alert-row'+(a.type==='intrusion'?' intrusion':'');
+    row.style.animation=`fadeInUp .4s ease-out ${idx*0.1}s both`;
+    row.innerHTML=`<div class="alert-dot${a.type==='intrusion'?' red':''}"></div><div class="alert-text">${a.text}</div><span class="alert-zone${a.type==='intrusion'?' red':''}">${a.zone}</span>`;
+    list.appendChild(row);
+  });
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const style=document.createElement('style');
+  style.textContent='@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}';
+  document.head.appendChild(style);
+  renderAlerts();
+});
+setInterval(()=>{
+  evtCount++;document.getElementById('d-evt').textContent=evtCount;
+  alertTemplates.unshift(alertTemplates.pop());
+  renderAlerts();
+},4200);
+setInterval(()=>{
+  const now=new Date();
+  document.getElementById('dash-time').textContent=now.toTimeString().slice(0,8)+' · LIVE';
+},1000);
+</script>
